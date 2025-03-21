@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deadline Reminders</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: linear-gradient(45deg, #ff7eb3, #ff758c, #ff9472, #ffd97d, #85ffbd, #7afcff);
+            background-size: 400% 400%;
+            animation: gradientBG 8s ease infinite;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            width: 70%;
+            text-align: center;
+            animation: fadeIn 1s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .task-card {
+            background: #fff;
+            padding: 15px;
+            margin: 10px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            font-size: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.2s;
+        }
+
+        .task-card:hover {
+            transform: scale(1.02);
+        }
+
+        .countdown {
+            font-weight: bold;
+            color: #ff4f81;
+        }
+
+        button {
+            background: #ff4f81;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #ff2f61;
+        }
+
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #ff4f81;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>📅 Assignment Tracker</h2>
+
+        <div id="taskContainer"></div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Assignment</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th>Time Taken</th>
+                </tr>
+            </thead>
+            <tbody id="taskTableBody"></tbody>
+        </table>
+
+        <button onclick="goToDashboard()">Back to Dashboard</button>
+    </div>
+
+    <script>
+        let deadlineData = JSON.parse(localStorage.getItem("deadlineData")) || {};
+        let timeData = JSON.parse(localStorage.getItem("timeData")) || {};
+        let countdownIntervals = {};
+
+        const assignments = ["Assignment 1", "Assignment 2", "Assignment 3", "Assignment 4", "Assignment 5"];
+        const taskContainer = document.getElementById("taskContainer");
+
+        assignments.forEach((assignment, index) => {
+            const taskId = index + 1;
+            taskContainer.innerHTML += `
+                <div class="task-card" id="task${taskId}">
+                    <div>
+                        <span>📘 ${assignment}</span>
+                        <input type="datetime-local" class="deadline-input" id="deadline${taskId}">
+                        <button onclick="setDeadline(${taskId})">Set Deadline</button>
+                    </div>
+                    <div id="countdown${taskId}" class="countdown">No deadline set</div>
+                    <button onclick="completeTask(${taskId})" id="complete${taskId}">Complete</button>
+                </div>
+            `;
+        });
+
+        function setDeadline(taskId) {
+            let deadlineInput = document.getElementById(`deadline${taskId}`).value;
+            if (deadlineInput) {
+                let deadlineTime = new Date(deadlineInput).getTime();
+                deadlineData[taskId] = deadlineTime;
+                timeData[taskId] = { startTime: new Date().toLocaleString() };
+                localStorage.setItem("deadlineData", JSON.stringify(deadlineData));
+                localStorage.setItem("timeData", JSON.stringify(timeData));
+                updateCountdown(taskId);
+            } else {
+                alert("Please select a valid deadline.");
+            }
+        }
+
+        function updateCountdown(taskId) {
+            let countdownElement = document.getElementById(`countdown${taskId}`);
+            let deadline = deadlineData[taskId];
+            if (!deadline) return;
+
+            function refreshCountdown() {
+                let now = new Date().getTime();
+                let distance = deadline - now;
+                if (distance <= 0) {
+                    countdownElement.textContent = "⏳ Deadline passed!";
+                    clearInterval(countdownIntervals[taskId]);
+                } else {
+                    let hours = Math.floor(distance / (1000 * 60 * 60));
+                    let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    countdownElement.textContent = `${hours}h ${minutes}m left`;
+                }
+            }
+            refreshCountdown();
+            countdownIntervals[taskId] = setInterval(refreshCountdown, 1000);
+        }
+
+        function completeTask(taskId) {
+            if (!deadlineData[taskId]) {
+                alert("Please set a deadline before completing the task.");
+                return;
+            }
+            timeData[taskId].endTime = new Date().toLocaleString();
+            let startTime = new Date(timeData[taskId].startTime);
+            let endTime = new Date(timeData[taskId].endTime);
+            let duration = Math.abs((endTime - startTime) / 1000 / 60) + " mins";
+            delete deadlineData[taskId];
+            localStorage.setItem("deadlineData", JSON.stringify(deadlineData));
+            localStorage.setItem("timeData", JSON.stringify(timeData));
+            document.getElementById("taskTableBody").innerHTML += `<tr><td>${assignments[taskId - 1]}</td><td>${timeData[taskId].startTime}</td><td>${timeData[taskId].endTime}</td><td>${duration}</td></tr>`;
+        }
+
+        function goToDashboard() {
+            window.location.href = "dashboard.html";
+        }
+    </script>
+</body>
+</html>

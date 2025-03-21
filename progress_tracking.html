@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Progress Tracker</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(45deg, #ff7eb3, #85ffbd);
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            animation: fadeIn 1s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .calendar, .tracker, .streak-meter {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 250px; /* Adjust as needed */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+
+        .calendar:hover, .tracker:hover, .streak-meter:hover {
+            transform: scale(1.02);
+        }
+
+        .tracker {
+            text-align: center;
+            width: 50%;
+        }
+
+        .task {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            transition: background 0.3s;
+        }
+
+        .task:hover {
+            background: #f9f9f9;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #ddd;
+            border-radius: 5px;
+            margin: 10px 0;
+            position: relative;
+        }
+        
+        .progress {
+            height: 10px;
+            background: #4caf50;
+            border-radius: 5px;
+            width: 0;
+            transition: width 0.5s ease-in-out;
+        }
+        
+        button {
+            background: #ff4f81;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #ff2e63;
+        }
+    </style>
+</head>
+<body>
+    <div class="calendar">
+        <label><b>Select Date</b></label>
+        <select id="month"></select>
+        <input type="number" id="year" value="2025">
+        <input type="number" id="day" value="1" min="1" max="31">
+    </div>
+
+    <div class="tracker">
+        <h2>📌 Today's Tasks</h2>
+        <div class="task"><input type="checkbox" class="task-checkbox" onchange="updateProgress()"> Complete Assignment 1</div>
+        <div class="task"><input type="checkbox" class="task-checkbox" onchange="updateProgress()"> Study for 2 hours</div>
+        <div class="task"><input type="checkbox" class="task-checkbox" onchange="updateProgress()"> Review Notes</div>
+        <div class="task"><input type="checkbox" class="task-checkbox" onchange="updateProgress()"> Take a Quiz</div>
+        <div class="progress-bar"><div class="progress" id="progress"></div></div>
+        <button onclick="completeDay()">Complete</button>
+        <button onclick="goToDashboard()">Back to Dashboard</button>
+    </div>
+
+    <div class="streak-meter">
+        <h2>🔥 Streak: <span id="streakCount">0</span> Days</h2>
+    </div>
+
+    <script>
+        let progressData = JSON.parse(localStorage.getItem("progressData")) || {};
+        let streak = parseInt(localStorage.getItem("streak")) || 0;
+        document.getElementById("streakCount").innerText = streak;
+
+        function populateMonths() {
+            const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            let monthSelect = document.getElementById("month");
+            months.forEach((month, index) => {
+                let option = document.createElement("option");
+                option.value = index + 1;
+                option.textContent = month;
+                monthSelect.appendChild(option);
+            });
+            monthSelect.value = new Date().getMonth() + 1;
+        }
+
+        function loadTasks() {
+            let dateKey = getSelectedDate();
+            let savedProgress = progressData[dateKey] || { completed: [], streak: streak };
+            document.querySelectorAll(".task-checkbox").forEach((checkbox, index) => {
+                checkbox.checked = savedProgress.completed.includes(index);
+            });
+            updateProgress();
+        }
+
+        function updateProgress() {
+            let checkboxes = document.querySelectorAll(".task-checkbox");
+            let checkedCount = [...checkboxes].filter(cb => cb.checked).length;
+            document.getElementById("progress").style.width = (checkedCount / checkboxes.length) * 100 + "%";
+        }
+
+        function completeDay() {
+            let dateKey = getSelectedDate();
+            let checkboxes = document.querySelectorAll(".task-checkbox");
+            let completedTasks = [...checkboxes].map((cb, index) => cb.checked ? index : null).filter(i => i !== null);
+            progressData[dateKey] = { completed: completedTasks };
+            localStorage.setItem("progressData", JSON.stringify(progressData));
+
+            if (completedTasks.length === checkboxes.length) {
+                let prevDateKey = getPreviousDate();
+                if (progressData[prevDateKey] && progressData[prevDateKey].completed.length === checkboxes.length) {
+                    streak++;
+                } else {
+                    streak = 1;
+                }
+                localStorage.setItem("streak", streak);
+                document.getElementById("streakCount").innerText = streak;
+            }
+            goToNextDay();
+        }
+
+        function goToNextDay() {
+            let dayInput = document.getElementById("day");
+            dayInput.value = parseInt(dayInput.value) + 1;
+            loadTasks();
+        }
+
+        function getSelectedDate() {
+            let month = document.getElementById("month").value;
+            let year = document.getElementById("year").value;
+            let day = document.getElementById("day").value;
+            return `${year}-${month}-${day}`;
+        }
+
+        function getPreviousDate() {
+            let day = parseInt(document.getElementById("day").value) - 1;
+            let month = document.getElementById("month").value;
+            let year = document.getElementById("year").value;
+            return `${year}-${month}-${day}`;
+        }
+
+        function goToDashboard() {
+            window.location.href = "dashboard.html";
+        }
+
+        document.getElementById("day").addEventListener("change", loadTasks);
+        populateMonths();
+        loadTasks();
+    </script>
+</body>
+</html>

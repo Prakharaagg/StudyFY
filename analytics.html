@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual Progress Representation</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #f4f4f4;
+            padding: 10px;
+        }
+
+        .container {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            text-align: center;
+        }
+
+        .graph-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        canvas {
+            background: white;
+            border-radius: 8px;
+            width: 100% !important;
+            height: 250px !important;
+        }
+
+        .progress-bar {
+            width: 100%;
+            background: #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 10px;
+            background: #4caf50;
+            text-align: right;
+            padding-right: 5px;
+            color: white;
+            line-height: 10px;
+        }
+
+        button {
+            background: #007bff;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h3>📊 Visual Progress Representation</h3>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress" style="width: 60%;">60%</div>
+        </div>
+        
+        <div class="graph-container">
+            <canvas id="donutChart"></canvas>
+            <canvas id="streakChart"></canvas>
+            <canvas id="weeklyGraph"></canvas>
+            <canvas id="timeAnalytics"></canvas>
+        </div>
+        
+        <button onclick="goToDashboard()">Back to Dashboard</button>
+    </div>
+
+    <script>
+        function goToDashboard() {
+            window.location.href = "dashboard.html";
+        }
+
+        const donutCtx = document.getElementById('donutChart').getContext('2d');
+        new Chart(donutCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Completed', 'Pending'],
+                datasets: [{
+                    data: [60, 40],
+                    backgroundColor: ['#4caf50', '#ff4f81']
+                }]
+            }
+        });
+
+        const streakCtx = document.getElementById('streakChart').getContext('2d');
+        new Chart(streakCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Daily Streak',
+                    data: [1, 1, 0, 1, 1, 0, 1],
+                    backgroundColor: '#ffb400'
+                }]
+            }
+        });
+
+        const weeklyCtx = document.getElementById('weeklyGraph').getContext('2d');
+        new Chart(weeklyCtx, {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Study Time (hrs)',
+                    data: [2, 3, 1, 4, 5, 3, 2],
+                    borderColor: '#007bff',
+                    fill: false
+                }]
+            }
+        });
+
+        const timeCtx = document.getElementById('timeAnalytics').getContext('2d');
+        new Chart(timeCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Reading', 'Coding', 'Research', 'Assignments'],
+                datasets: [{
+                    data: [25, 35, 20, 20],
+                    backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#4caf50']
+                }]
+            }
+        });
+    </script>
+</body>
+</html>
